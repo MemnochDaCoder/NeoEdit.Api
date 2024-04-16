@@ -12,32 +12,32 @@ namespace NeoEdit.Api.Data.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Document>> GetAllDocumentsAsync()
+        public async Task<IEnumerable<Document>> GetAllAsync()
         {
             return await _context.Documents.ToListAsync();
         }
 
-        public async Task<Document> GetDocumentByIdAsync(int id)
+        public async Task<Document?> GetByIdAsync(int id)
         {
             return await _context.Documents.FindAsync(id);
         }
 
-        public async Task<Document> CreateDocumentAsync(Document document)
+        public async Task<Document> AddAsync(Document document)
         {
             _context.Documents.Add(document);
             await _context.SaveChangesAsync();
             return document;
         }
 
-        public async Task UpdateDocumentAsync(Document document)
+        public async Task UpdateAsync(Document document)
         {
-            _context.Entry(document).State = EntityState.Modified;
+            _context.Documents.Update(document);
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteDocumentAsync(int id)
+        public async Task DeleteAsync(int id)
         {
-            var document = await GetDocumentByIdAsync(id);
+            var document = await GetByIdAsync(id);
             if (document != null)
             {
                 _context.Documents.Remove(document);

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using NeoEdit.Api.Data.Repositories;
+using NeoEdit.Api.Eventing;
 using NeoEdit.Api.Services;
+using RabbitMQ.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,13 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddSingleton(sp =>
+{
+    var factory = new ConnectionFactory() { HostName = "localhost" }; // Customize as needed
+    return factory.CreateConnection();
+});
+builder.Services.AddSingleton<RabbitMQClient>();
 
 // Add Swagger generator to provide a Swagger JSON endpoint.
 builder.Services.AddSwaggerGen(c =>
