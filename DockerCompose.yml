@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: neoedit_postgres
+    environment:
+      POSTGRES_DB: neoeditdb
+      POSTGRES_USER: NeoEditUser
+      POSTGRES_PASSWORD: NeoEdit_PostgreSQL
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: neoedit_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: NeoEditUser
+      RABBITMQ_DEFAULT_PASS: NeoEdit_RabbitMQ
+    ports:
+      - "5672:5672"   # Standard AMQP protocol port
+      - "15672:15672" # Management UI port
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=neoeditdb;Username=NewEditUser;Password=NeoEdit_PostgreSQL;"
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: NeoEditUser
+      RABBITMQ_PASSWORD: NeoEdit_RabbitMQ  # Corrected to match RabbitMQ environment
+    ports:
+      - "8000:80"
+
+volumes:
+  postgres_data:
+  rabbitmq_data:

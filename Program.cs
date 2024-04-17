@@ -3,6 +3,7 @@ using NeoEdit.Api.Data.Repositories;
 using NeoEdit.Api.Eventing;
 using NeoEdit.Api.Services;
 using RabbitMQ.Client;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,12 +15,19 @@ builder.Services.AddControllers();
 // Add the endpoints API explorer which is necessary for Swagger.
 builder.Services.AddEndpointsApiExplorer();
 
+// Setup the DataContext for PostgreSQL
 builder.Services.AddDbContext<DataContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))); // Changed from UseSqlServer to UseNpgsql
 
+// Setup RabbitMQ connection
 builder.Services.AddSingleton(sp =>
 {
-    var factory = new ConnectionFactory() { HostName = "localhost" }; // Customize as needed
+    var factory = new ConnectionFactory()
+    {
+        HostName = "localhost", // Customize as needed, for Docker use the service name defined in docker-compose.yml
+        UserName = builder.Configuration["RabbitMQ:UserName"], // Recommended to use configurations
+        Password = builder.Configuration["RabbitMQ:Password"]
+    };
     return factory.CreateConnection();
 });
 builder.Services.AddSingleton<RabbitMQClient>();
@@ -46,30 +54,16 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 
-// If using Entity Framework, setup the DataContext
-builder.Services.AddDbContext<DataContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    // Enable middleware to serve generated Swagger as a JSON endpoint.
     app.UseSwagger();
-    // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
-    // specifying the Swagger JSON endpoint.
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "NeoEdit API V1"));
 }
 
-// Enable middleware to redirect HTTP requests to HTTPS.
 app.UseHttpsRedirection();
-
-// Use authorization middleware to secure the app.
 app.UseAuthorization();
-
-// Map controllers to routes.
 app.MapControllers();
-
-// Run the application.
 app.Run();
